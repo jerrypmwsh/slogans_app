@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+        crossorigin="anonymous"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+        crossorigin="anonymous">
+    <script src="https://cdn.auth0.com/js/auth0/8.8/auth0.min.js"></script>
+    <script src="assets/js/auth0.js"></script>
+    <script src="assets/js/slogan.js"></script>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="jumbotron text-center">
+                <h1>Slogans Database</h1>
+                <button id="id_logout" type="image" class="btn btn-default" onclick="logout()">logout</button>
+            </div>
+        </div>
+        <span>
+    </span>
+    </header>
+    <div class="container">
+        <div class="panel panel-default">
+            <div class="panel-heading text-center">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" href="#id_add_panel">Add a slogan</a>
+                </h4>
+            </div>
+            <div id="id_add_panel" class="panel-body panel-collapse collapse">
+                <form id="id_add" onsubmit="return addSlogan()">
+                    <div class="form-group row">
+                        <div class="col-xs-3">
+                            <input type="text" name="slogan" placeholder="slogan" class="form-control">
+                        </div>
+                        <div class="col-xs-2">
+                            <input type="text" name="company" placeholder="company" class="form-control">
+                        </div>
+                        <div class="col-xs-2">
+                            <select id="id_category_select" name="categoryId" class="form-control">
+                                <option selected disabled hidden>category</option>
+                            </select>
+                        </div>
+                        <div class="col-xs-2">
+                            <select id="id_source_select" name="sourceId" class="form-control">
+                                <option selected disabled hidden>source</option>
+                            </select>
+                        </div>
+                        <div class="col-xs-2">
+                            <input type="text" name="sourceInfo" placeholder="source info" class="form-control">
+                        </div>
+                        <input type="submit" value="Submit" class="btn btn-default">
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading text-center">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" href="#id_search_panel">Search for a slogan</a>
+                </h4>
+            </div>
+            <div id="id_search_panel" class="panel-body panel-collapse collapse">
+                <div class="col-md-12">
+                    <input type="text" id="id_search" onkeyup="delayedFilterRows()" placeholder="Examples: 'just do it', 'category:Automobiles'"
+                        class="form-control" />
+                </div>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="table-responsive">
+                <table id="id_slogans" class="table table-striped table-sm">
+                    <tr>
+                        <th>ID</th>
+                        <th>SLOGAN</th>
+                        <th>COMPANY</th>
+                        <th>CATEGORY</th>
+                        <th>SOURCE</th>
+                        <th>SOURCE INFO</th>
+                        <th>Operations</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <footer class="navbar navbar-default navbar-fixed-bottom">
+        <div id="id_footer" class="container text-center">
+        </div>
+    </footer>
+</body>
+
+</html>

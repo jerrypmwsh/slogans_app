@@ -58,8 +58,8 @@ function addToTable(slogans) {
         id.innerHTML = sloganObj.id;
         slogan.innerHTML = sloganObj.slogan;
         company.innerHTML = sloganObj.company;
-        category.innerHTML = categories.get(sloganObj.categoryId);
-        source.innerHTML = sources.get(sloganObj.sourceId);
+        category.innerHTML = sloganObj.category;
+        source.innerHTML = sloganObj.source;
         sourceInfo.innerHTML = sloganObj.sourceInfo;
         editBtn.innerHTML = "<button id=\"id_edit\" type=\"image\" class=\"btn btn-default\" onclick=\"alert('edits')\">edit</button><button id=\"id_del\" type=\"image\" class=\"btn btn-default\" onclick=\"deleteSlogan(this)\">del</button>"
 
@@ -125,8 +125,7 @@ function deleteSlogan(delButton) {
 
 function getIdFromMap(map, value) {
     return Array.from(map.entries())
-        .find(entry => entry[1] === value)
-    [0];
+        .find(entry => entry[1] === value)[0];
 }
 
 function toRow(slogan) {

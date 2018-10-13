@@ -3,18 +3,6 @@ var categories = new Map();
 var sources = new Map();
 var count = 0;
 
-function getSlogans() {
-    return fetch(base_url + "/slogans",
-        {
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-            }
-        })
-        .then(response => response.json())
-        .then(addToTable);
-}
-
 function getCategories() {
     return fetch(base_url + "/categories",
         {
@@ -25,7 +13,7 @@ function getCategories() {
         })
         .then(response => response.json())
         .then(json => {
-            json.forEach(category => categories.set(category.id, category.category));
+            json.forEach(category => categories.set(category.category, category.c_id));
         });
 }
 
@@ -39,42 +27,16 @@ function getSources() {
         })
         .then(response => response.json())
         .then(json => {
-            json.forEach(source => sources.set(source.id, source.source));
+            json.forEach(source => sources.set(source.source, source.src_id));
         });
-}
-
-function addToTable(slogans) {
-    var table = document.getElementById('id_slogans');
-    slogans.forEach(sloganObj => {
-        var row = table.insertRow();
-        var id = row.insertCell();
-        var slogan = row.insertCell();
-        var company = row.insertCell();
-        var category = row.insertCell();
-        var source = row.insertCell();
-        var sourceInfo = row.insertCell();
-        var editBtn = row.insertCell();
-
-        id.innerHTML = sloganObj.id;
-        slogan.innerHTML = sloganObj.slogan;
-        company.innerHTML = sloganObj.company;
-        category.innerHTML = sloganObj.category;
-        source.innerHTML = sloganObj.source;
-        sourceInfo.innerHTML = sloganObj.sourceInfo;
-        editBtn.innerHTML = "<button id=\"id_edit\" type=\"image\" class=\"btn btn-default\" onclick=\"alert('edits')\">edit</button><button id=\"id_del\" type=\"image\" class=\"btn btn-default\" onclick=\"deleteSlogan(this)\">del</button>"
-
-        count++;
-    });
 }
 
 function addSlogan() {
     var form = $("#id_add")
     var slogan = {};
     form.serializeArray().forEach(entry => slogan[entry.name] = entry.value);
-    var category = slogan.categoryId
-    var source = slogan.sourceId
-    slogan.categoryId = getIdFromMap(categories, category);
-    slogan.sourceId = getIdFromMap(sources, source);
+    slogan.categoryId = categories.get(slogan.category);
+    slogan.sourceId = sources.get(slogan.source);
 
     fetch(base_url + '/slogans',
         {
@@ -82,63 +44,27 @@ function addSlogan() {
             headers: {
                 "Content-Type": "application/json",
                 "Accept": "application/json",
-                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token') //TODO: Move to common method
             },
-            body: JSON.stringify(slogan)
+            body: JSON.stringify(JSON.stringify(slogan))
         })
         .then(response => response.text())
         .then(text => {
             slogan.id = text
-            // TODO: Fix this category(Id)/source(Id) swapping ugliness
-            slogan.categoryId = category
-            slogan.sourceId = source
-            var fr = $("#id_slogans tr:first");
-            fr.after(toRow(slogan));
-            renderCount(++count)
+            addRow(slogan)
         });
     
     form[0].reset();
     return false;
 }
 
-function deleteSlogan(delButton) {
-    if (!confirm("Are you sure you want to delete?")) {
-        return
-    }
-    var rowId = delButton.parentNode.parentNode.rowIndex
-    var sloganId = $(`#id_slogans tr:eq(${rowId}) td:first`).html()
-
-    fetch(base_url + '/slogans/' + sloganId,
-        {
-            method: "DELETE",
-            headers: {
-                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-            }
-        })
-        .then(response => {
-            var table = document.getElementById('id_slogans');
-            table.deleteRow(rowId)
-            renderCount(--count)
-        })
-
-}
-
-function getIdFromMap(map, value) {
-    return Array.from(map.entries())
-        .find(entry => entry[1] === value)[0];
-}
-
-function toRow(slogan) {
-    return `<tr><td>${slogan.id}</td><td>${slogan.slogan}</td><td>${slogan.company}</td><td>${slogan.categoryId}</td><td>${slogan.sourceId}</td><td>${slogan.sourceInfo}</td><td><button id=\"id_edit\" type=\"image\" class=\"btn btn-default\" onclick=\"alert('edits')\">edit</button><button id=\"id_del\" type=\"image\" class=\"btn btn-default\" onclick=\"deleteSlogan(this)\">del</button></td></tr>`;
-}
-
-function addOptions() {
+function renderOptions() {
     var category_select = $("#id_category_select");
-    Array.from(categories.values())
+    Array.from(categories.keys())
         .forEach(category => addOption(category_select, category));
 
     var source_select = $("#id_source_select");
-    Array.from(sources.values())
+    Array.from(sources.keys())
         .forEach(source => addOption(source_select, source));
 }
 
@@ -148,63 +74,32 @@ function addOption(select, text) {
     select.append(option);
 }
 
-var timer;
-function delayedFilterRows() {
-    clearTimeout(timer);
-    timer = setTimeout(filterRows, 1000);
+function addRow(slogan) {
+    $("#id_slogans").tabulator("addRow", slogan)
 }
 
-function filterRows() {
-    var filter = $("#id_search").val();
-    hideRows(filter.toUpperCase());
-    $("#id_footer").text(`Slogans count: ${count}`);
-}
-
-function hideRows(filter) {
-    var table = document.getElementById('id_slogans');
-    var tr = table.getElementsByTagName("tr");
-
-    var column = "";
-    var text = filter;
-    if (filter.indexOf(":") > -1) {
-        var parts = filter.split(":");
-        column = parts[0];
-        text = parts[1];
+function deleteRows() {
+    if (!confirm("Delete the selected rows?")) {
+        return
     }
-    var col;
-    switch (column.toUpperCase()) {
-        case "ID":
-            col = 0;
-            break;
-        case "COMPANY":
-            col = 2;
-            break;
-        case "CATEGORY":
-            col = 3;
-            break;
-        case "SOURCE":
-            col = 4;
-            break;
-        case "SOURCEINFO":
-            col = 5;
-            break;
-        case "SLOGAN":
-        default:
-            col = 1;
-    }
-    count = 0;
-    for (i = 1; i < tr.length; i++) {
-        var td = tr[i].getElementsByTagName("td")[col];
-        if (td) {
-            if (td.innerHTML.toUpperCase().indexOf(text) > -1) {
-                count++;
-                tr[i].style.display = "";
-            } else {
-                tr[i].style.display = "none";
+    rows = $("#id_slogans").tabulator("getSelectedRows")
+    rows.forEach(row => {
+        fetch(base_url + `/slogans/${row.getData().s_id}`,
+        {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
             }
-        }
-    }
+        })
+        .then(handleResponse)
+        .then(response => response.json())
+        .then(response => row.delete()) //TODO: Sometimes selected rows don't disappear from the table after deletion, but are deleted from DB.
+        .catch(error => console.log(`Unable to delete slogan: ${error}`))
+    })
 }
+
 
 function displayProfile() {
   // display the profile
@@ -213,17 +108,77 @@ function displayProfile() {
   buttons.innerHTML = `<img src="${pic}" />`;
 }
 
-function renderCount(num) {
-    $("#id_footer").text(`Slogans Count: ${num}`)
+function handleResponse(response) {
+    if (!response.ok) {
+        throw Error(response.statusText)
+    }
+    return response
 }
 
 $(function () {
-    if (!isAuthenticated()) {
-        window.location.replace("/");
-    }
+    //create Tabulator on DOM element with id "example-table"
+    $("#id_slogans").tabulator({
+        height: "800px",
+        layout:"fitDataFill",
+        addRowPos:"top",
+        pagination:"local",
+        selectable: true,
+        columns:[
+            {title:"ID", field:"s_id", editor:false, visible:false, sorter:"number"},
+            {title:"SLOGAN", field:"slogan", align:"left", headerFilter:"input", editor:true},
+            {title:"COMPANY", field:"company", align:"center", headerFilter:"input", editor:true},
+            {title:"CATEGORY", field:"category", align:"center", headerFilter:"input", editor:true},
+            {title:"SOURCE", field:"source", align:"center", headerFilter:"input", editor:true},
+            {title:"SOURCE_INFO", field:"source_info", align:"center", headerFilter:"input", editor:true},
+        ],
+        cellEdited:function(cell) {
+            if(cell.getField() === 's_id') {
+                return;
+            }
+            row = cell.getRow()
+            rowData = row.getData()
+            rowData.source_id = sources.get(rowData.source)
+            rowData.category_id = categories.get(rowData.category)
+            requestData = JSON.stringify(rowData)
+            fetch(base_url + '/slogans',
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                body: JSON.stringify(requestData) //TODO: Why does stringifying twice work?
+            })
+            .then(handleResponse)
+            .then(response => response.json())
+            .then(s_id => {
+                idCell = row.getCell('s_id')
+                idCell.setValue(s_id, false)
+            })
+            .catch(error => console.log(`Unable to update slogan. Error: ${error}`))
+
+        },
+        cellEditing:function(cell) {
+            cell.getRow().toggleSelect();
+        }
+    });
+
     getCategories()
         .then(getSources)
-        .then(getSlogans)
-        .then(() => $("#id_footer").text(`Slogans Count: ${count}`))
-        .then(addOptions);
+        .then(renderOptions);
+});
+
+
+$.ajax({
+    url: base_url + "/slogans",
+    type: "get",
+    async: true,
+    dataType:'json',
+    headers:{
+        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+    },
+    success: function (data) {
+        $("#id_slogans").tabulator("setData", data);
+    },
 });
